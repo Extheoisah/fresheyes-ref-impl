@@ -60,6 +60,16 @@ pub struct ForkResult {
     pub forked_repo: String,
 }
 
+impl ForkResult {
+    pub fn new(owner: String, repo: String, forked_repo: String) -> Self {
+        Self {
+            owner,
+            repo,
+            forked_repo,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UserFields {
     pub login: String,

@@ -73,7 +73,7 @@ message ErrorResponse {
 service GitHubService {
   rpc CreatePullRequest(PullRequest) returns (PullRequestDetails);
 //   rpc GetPullRequest(PullRequest) returns (PullRequestDetails);
-//   rpc ForkRepository(ForkRequest) returns (ForkResult);
+  rpc ForkRepository(ForkRequest) returns (ForkResult);
 //   rpc CreateBranch(Branch) returns (Branch);
 //   rpc GetPullRequestReviews(PullRequest) returns (stream ReviewComment);
 }
