@@ -2,6 +2,7 @@
 name = "fresh_eyes"
 version = "0.1.0"
 edition = "2021"
+default-run = "fresh_eyes"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -31,6 +32,7 @@ crate-type = ["cdylib", "rlib"]
 [features]
 default = []
 cli = []
+
 
 [[bin]]
 name = "fresheyes-grpc"

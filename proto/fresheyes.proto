@@ -69,11 +69,15 @@ message ErrorResponse {
   int32 status =  2;
 }
 
+message PrResponse {
+  string pr_url = 1;
+}
+
 // Define the service with the necessary RPC methods.
 service GitHubService {
-  rpc CreatePullRequest(PullRequest) returns (PullRequestDetails);
-//   rpc GetPullRequest(PullRequest) returns (PullRequestDetails);
   rpc ForkRepository(ForkRequest) returns (ForkResult);
-//   rpc CreateBranch(Branch) returns (Branch);
-//   rpc GetPullRequestReviews(PullRequest) returns (stream ReviewComment);
+  rpc CreateBranch(Branch) returns (Branch);
+  rpc CreatePullRequest(PullRequest) returns (PullRequestDetails);
+  rpc ProcessPullRequest(PullRequest) returns (PrResponse);
+//  rpc GetPullRequestReviews(PullRequest) returns (ReviewComment);
 }
