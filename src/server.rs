@@ -1,18 +1,36 @@
+use dotenv::dotenv;
 use fresh_eyes::{
-    extract_pr_details, get_pull_request_reviews, Branch as LibBranch,
+    extract_pr_details, Branch as LibBranch,
     ForkRequest as LibForkRequest, PullRequest as LibPullRequest,
 };
 use fresheyes::git_hub_service_server::{GitHubService, GitHubServiceServer};
 use fresheyes::{Branch, ForkRequest, ForkResult, PrResponse, PullRequest, PullRequestDetails};
+use std::env;
 use tonic::{transport::Server, Request, Response, Status};
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+struct BranchData {
+    owner: String,
+    repo: String,
+    branch_ref: String,
+    sha: String,
+}
 
 pub mod fresheyes {
     tonic::include_proto!("fresheyes");
 }
 
 #[derive(Debug, Default)]
-pub struct GitHubServiceImpl {}
+pub struct GitHubServiceImpl {
+    pub github_token: String,
+}
 
+impl GitHubServiceImpl {
+    pub fn new(github_token: String) -> Self {
+        Self { github_token }
+    }
+}
 #[tonic::async_trait]
 impl GitHubService for GitHubServiceImpl {
     // Implementation of the fork_repository method
@@ -23,20 +41,18 @@ impl GitHubService for GitHubServiceImpl {
         let fork_request = request.into_inner();
 
         let fork_request = LibForkRequest {
-            owner: &fork_request.owner.clone(),
-            repo: &fork_request.repo.clone(),
+            owner: &fork_request.owner,
+            repo: &fork_request.repo,
         };
 
         // Call the fork method to fork the repository on GitHub
         match fork_request.fork().await {
             Ok(data) => {
-                // If the fork was successful, create a ForkResult instance
-                let fork_result = ForkResult {
+                Ok(Response::new(ForkResult {
                     owner: data.owner,
                     repo: data.repo,
                     forked_repo: data.forked_repo,
-                };
-                Ok(Response::new(fork_result))
+                }))
             }
             Err(e) => {
                 // If there was an error, return it
@@ -60,15 +76,16 @@ impl GitHubService for GitHubServiceImpl {
 
         match branch.create().await {
             Ok(data) => {
+                let branch_data: BranchData = serde_json::from_value(data)
+                    .map_err(|e| Status::internal(format!("Failed to parse branch data: {}", e)))?;
+
                 let branch = Branch {
-                    owner: data["owner"].as_str().unwrap_or_default().to_string(),
-                    repo: data["repo"].as_str().unwrap_or_default().to_string(),
-                    branch_ref: data["ref"].as_str().unwrap_or_default().to_string(),
-                    sha: data["object"]["sha"]
-                        .as_str()
-                        .unwrap_or_default()
-                        .to_string(),
+                    owner: branch_data.owner,
+                    repo: branch_data.repo,
+                    branch_ref: branch_data.branch_ref,
+                    sha: branch_data.sha,
                 };
+
                 Ok(Response::new(branch))
             }
             Err(e) => Err(Status::internal(format!("Failed to create branch: {}", e))),
@@ -147,7 +164,6 @@ impl GitHubService for GitHubServiceImpl {
             &pull_request_details.head_ref,
         );
 
-        println!("Creating pull request");
         match new_pull_request.create().await {
             Ok(data) => {
                 // If the pull request was created successfully, extract the details
@@ -268,8 +284,10 @@ impl GitHubService for GitHubServiceImpl {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    dotenv().ok();
     let addr = "[::1]:50051".parse()?;
-    let github_service = GitHubServiceImpl::default();
+    let github_token = env::var("GITHUB_TOKEN").expect("GITHUB_TOKEN must be set");
+    let github_service = GitHubServiceImpl::new(github_token);
 
     println!("Server running on {}", addr);
 

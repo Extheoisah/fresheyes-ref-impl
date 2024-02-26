@@ -230,7 +230,7 @@ impl<'a> PullRequest<'a> {
                 if let FreshEyesError::StatusCodeError(error_response) = e {
                     return if error_response.status == StatusCode::NOT_FOUND.as_u16() {
                         Err(FreshEyesError::StatusCodeError(ErrorResponse {
-                            message: "pull request not found!".to_string().to_string(),
+                            message: "pull request not found!".to_string(),
                             status: error_response.status,
                         }))
                     } else {
