@@ -4,11 +4,10 @@ use fresh_eyes::{
     ForkRequest as LibForkRequest, PullRequest as LibPullRequest,
 };
 use fresheyes::git_hub_service_server::{GitHubService, GitHubServiceServer};
-use fresheyes::{Branch, ForkRequest, ForkResult, PrResponse, PullRequest, PullRequestDetails, Empty};
+use fresheyes::{Branch, ForkRequest, ForkResult, PrResponse, PullRequest, PullRequestDetails};
 use std::env;
 use tonic::{transport::Server, Request, Response, Status};
 use serde::Deserialize;
-use tonic_web::enable;
 
 #[derive(Deserialize)]
 struct BranchData {
@@ -65,7 +64,6 @@ impl GitHubService for GitHubServiceImpl {
         }
     }
 
-
     async fn create_branch(&self, request: Request<Branch>) -> Result<Response<Branch>, Status> {
         let branch = request.into_inner();
 
@@ -93,7 +91,6 @@ impl GitHubService for GitHubServiceImpl {
             Err(e) => Err(Status::internal(format!("Failed to create branch: {}", e))),
         }
     }
-
     async fn create_pull_request(
         &self,
         request: Request<PullRequest>,
@@ -190,6 +187,7 @@ impl GitHubService for GitHubServiceImpl {
             }
         }
     }
+
     async fn process_pull_request(
         &self,
         request: Request<PullRequest>,
@@ -282,29 +280,19 @@ impl GitHubService for GitHubServiceImpl {
         let pr_response = PrResponse { pr_url };
         Ok(Response::new(pr_response))
     }
-
-    //check if the server is running
-    async fn check(&self, request: Request<Empty>) -> Result<Response<Empty>, Status> {
-        println!("Received Check request: {:?}", request);
-        // Simply return an empty response
-        let reply = Empty {};
-        Ok(Response::new(reply))
-    }
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
-    let port = env::var("PORT").unwrap_or_else(|_| String::from("8000"));
-    let addr = format!("0.0.0.0:{}", port).parse()?;
+    let addr = "[::1]:50051".parse()?;
     let github_token = env::var("GITHUB_TOKEN").expect("GITHUB_TOKEN must be set");
     let github_service = GitHubServiceImpl::new(github_token);
 
     println!("Server running on {}", addr);
 
     Server::builder()
-        .accept_http1(true)
-        .add_service(enable(GitHubServiceServer::new(github_service)))
+        .add_service(GitHubServiceServer::new(github_service))
         .serve(addr)
         .await?;
 

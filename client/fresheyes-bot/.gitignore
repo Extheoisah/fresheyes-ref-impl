@@ -1,0 +1,10 @@
+node_modules
+npm-debug.log
+*.pem
+!mock-cert.pem
+.env
+coverage
+lib
+test
+mock-cert.pem
+../test/fixtures/mock-cert.pem
