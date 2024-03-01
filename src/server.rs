@@ -190,6 +190,7 @@ impl GitHubService for GitHubServiceImpl {
             }
         }
     }
+
     async fn process_pull_request(
         &self,
         request: Request<PullRequest>,
@@ -290,6 +291,7 @@ impl GitHubService for GitHubServiceImpl {
         let reply = Empty {};
         Ok(Response::new(reply))
     }
+
 }
 
 #[tokio::main]

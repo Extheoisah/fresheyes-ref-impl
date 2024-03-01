@@ -85,4 +85,5 @@ service GitHubService {
   rpc ProcessPullRequest(PullRequest) returns (PrResponse);
 //  rpc GetPullRequestReviews(PullRequest) returns (ReviewComment);
   rpc check(Empty) returns (Empty);
+
 }
