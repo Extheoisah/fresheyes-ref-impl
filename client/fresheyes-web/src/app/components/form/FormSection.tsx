@@ -102,13 +102,6 @@ const FormSection = () => {
       </div>
 
       {loading.loader || loading.modal ? <Modal link={link} loading={loading} setLoading={setLoading} /> : null}
-      <div className='flex items-center justify-center w-full p-6'>
-        {link && (
-          <Link href={link} target='_blank' className=' underline font-semibold text-base'>
-            Click to see pr
-          </Link>
-        )}
-      </div>
     </>
   );
 };
