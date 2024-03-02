@@ -1,16 +1,17 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
-import { GitHubServiceClient } from "@/proto/fresheyes_pb_service";
+import React, { useState } from "react";
 import { PullRequest } from "@/proto/fresheyes_pb";
 import Link from "next/link";
 import Modal from "../modal/Modal";
+import { useGrpcClient } from "@/app/hooks/useGrpcClinet";
 
 const FormSection = () => {
-  const client = useMemo(() => new GitHubServiceClient("http://localhost:50051"), []);
+  const { client } = useGrpcClient();
 
   const [link, setLink] = useState("");
   const [loading, setLoading] = useState({ loader: false, modal: false });
+  const [error, setError] = useState("");
   const [formValues, setFormValues] = useState<{ owner: string; repo: string; pull_number: number }>({
     owner: "bitcoin",
     repo: "bitcoin",
@@ -44,8 +45,14 @@ const FormSection = () => {
 
     const res = client.processPullRequest(pr, (error, result) => {
       if (error) {
-        console.error(error);
-        setLoading({ loader: false, modal: false });
+        if (error.message.length === 0) {
+          setError("Opps an error occured you might want to check your setup");
+          setLoading({ loader: false, modal: false });
+        } else {
+          setError(`Error: ${error.message}`);
+          console.log({ error });
+          setLoading({ loader: false, modal: false });
+        }
       } else {
         setLink(result?.getPrUrl()!);
         setLoading({ loader: false, modal: true });
@@ -85,6 +92,7 @@ const FormSection = () => {
           value={pull_number}
           onChange={handleChange}
         />
+        {error && <p className=' text-center text-red-600 font-semibold'>{error}</p>}
         <button
           className={`bg- border border-white hover:opacity-70 rounded-md w-full px-12 py-[16px] whitespace-nowrap font-semibold `}
           onClick={processPullRequest}
@@ -106,4 +114,3 @@ const FormSection = () => {
 };
 
 export default FormSection;
-
