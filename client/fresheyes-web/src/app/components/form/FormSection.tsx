@@ -45,14 +45,9 @@ const FormSection = () => {
 
     const res = client.processPullRequest(pr, (error, result) => {
       if (error) {
-        if (error.message.length === 0) {
-          setError("Opps an error occured you might want to check your setup");
-          setLoading({ loader: false, modal: false });
-        } else {
-          setError(`Error: ${error.message}`);
-          console.log({ error });
-          setLoading({ loader: false, modal: false });
-        }
+        setError(`Error: ${error.message} Please try again or contact support info@bitcoindevs.xyz`);
+        console.log({ error });
+        setLoading({ loader: false, modal: false });
       } else {
         setLink(result?.getPrUrl()!);
         setLoading({ loader: false, modal: true });
