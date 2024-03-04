@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { PullRequest } from "@/proto/fresheyes_pb";
-import Link from "next/link";
+
 import Modal from "../modal/Modal";
 import { useGrpcClient } from "@/app/hooks/useGrpcClinet";
 
