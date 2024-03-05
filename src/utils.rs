@@ -1,7 +1,7 @@
 use std::{env, fs, io::stdin, path::Path, sync::Arc};
-
 use once_cell::sync::Lazy;
 use tokio::sync::Mutex;
+
 
 static TOKEN: Lazy<Arc<Mutex<Option<String>>>> = Lazy::new(|| Arc::new(Mutex::new(None)));
 
@@ -19,11 +19,6 @@ pub async fn get_or_prompt_token() -> Result<String, std::io::Error> {
 }
 
 fn get_token() -> Result<String, std::io::Error> {
-    // Check if the environment variable for the token exists
-    if let Ok(env_token) = env::var("GITHUB_TOKEN") {
-        return Ok(format!("Bearer {}", env_token));
-    }
-
     let home = env::var("HOME").unwrap();
     let config_dir = format!("{}/.fresheyes", home);
     fs::create_dir_all(&config_dir)?;
