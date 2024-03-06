@@ -7,6 +7,7 @@ use serde_json::{json, Value};
 use std::fmt;
 use thiserror::Error;
 mod utils;
+mod server_auth;
 
 pub enum RequestMethod {
     GET,

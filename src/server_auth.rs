@@ -1,19 +1,30 @@
+use std::fmt;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use once_cell::sync::Lazy;
 use actix_service::Transform;
 use actix_web::{
-    dev::{Service, ServiceRequest, ServiceResponse},
-    Error,
+    HttpResponse,
+    dev::{Service,ServiceRequest, ServiceResponse},
+    Error, ResponseError,
 };
-use futures_util::future::LocalBoxFuture;
+use futures_util::future::{LocalBoxFuture};
 use std::future::{ready, Ready};
 use std::task::{Context, Poll};
 
+
+
 pub struct Authentication;
 
+// This is the shared state where the token will be stored
+pub static TOKEN: Lazy<Arc<Mutex<Option<String>>>> = Lazy::new(|| Arc::new(Mutex::new(None)));
+
+
 impl<S, B> Transform<S, ServiceRequest> for Authentication
-where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
-    S::Future: 'static,
-    B: 'static,
+    where
+        S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
+        S::Future: 'static,
+        B: 'static,
 {
     type Response = ServiceResponse<B>;
     type Error = Error;
@@ -30,11 +41,32 @@ pub struct AuthenticationMiddleware<S> {
     service: S,
 }
 
+
+
+struct UnauthorizedError;
+impl ResponseError for UnauthorizedError {
+    fn error_response(&self) -> HttpResponse {
+        HttpResponse::Unauthorized().json("Unauthorized: Bearer token required")
+    }
+}
+
+impl fmt::Debug for UnauthorizedError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "UnauthorizedError")
+    }
+}
+
+impl fmt::Display for UnauthorizedError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Unauthorized: Bearer token required")
+    }
+}
+
 impl<S, B> Service<ServiceRequest> for AuthenticationMiddleware<S>
-where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
-    S::Future: 'static,
-    B: 'static,
+    where
+        S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
+        S::Future: 'static,
+        B: 'static,
 {
     type Response = ServiceResponse<B>;
     type Error = Error;
@@ -44,26 +76,26 @@ where
         self.service.poll_ready(cx)
     }
 
+
     fn call(&self, req: ServiceRequest) -> Self::Future {
-        let token = match req.headers().get("Authorization") {
-            Some(token) => token.to_str().unwrap_or_default(),
-            None => "",
-        };
+        let headers = req.headers().clone();
+        let token = headers
+            .get("Authorization")
+            .and_then(|header| header.to_str().ok())
+            .unwrap_or_default();
 
         if token.starts_with("Bearer ") {
-            let token = &token[7..]; // Remove "Bearer " prefix
             let fut = self.service.call(req);
+
+            // Export the token as an environment variable
+            std::env::set_var("BEARER_TOKEN", &token[7..]);
+
             Box::pin(async move {
-                // Placeholder for token validation. In a real application, you would validate the token here.
-                let res = fut.await?;
-                Ok(res)
+                fut.await
             })
         } else {
-            Box::pin(async move {
-                Err(actix_web::error::ErrorUnauthorized(
-                    "Unauthorized: Bearer token required",
-                ))
-            })
+            println!("No valid token found in request headers");
+            Box::pin(async { Err(UnauthorizedError.into()) })
         }
     }
 }

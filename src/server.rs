@@ -1,4 +1,5 @@
-mod server_auth;
+pub mod server_auth;
+
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use dotenv::dotenv;
 use fresh_eyes::{
@@ -14,9 +15,6 @@ use std::env;
 async fn hello() -> impl Responder {
     HttpResponse::Ok().body("Hello world!")
 }
-
-//process the pull request
-
 // Define a struct to receive the pull request data
 #[derive(Deserialize)]
 pub struct PullRequest {
