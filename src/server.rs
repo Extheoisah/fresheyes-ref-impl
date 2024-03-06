@@ -118,14 +118,14 @@ async fn main() -> std::io::Result<()> {
         .unwrap_or_else(|_| String::from("8080")) // provide a default value
         .parse()
         .expect("SERVER_PORT must be a number");
-
     println!("Server is running on port {}", port);
 
     HttpServer::new(|| App::new()
         .wrap(Authentication)
         .service(hello)
         .service(process_pull_request))
-        .bind(("127.0.0.1", port))?
+        .bind(("0.0.0.0", port))?
         .run()
         .await
+
 }
