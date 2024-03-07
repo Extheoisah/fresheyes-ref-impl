@@ -4,16 +4,13 @@ import React, { useState } from "react";
 
 import Modal from "../modal/Modal";
 import { processPr } from "./proceess-pr";
+import { PullRequest } from "@/types";
 
 const FormSection = () => {
   const [link, setLink] = useState("");
   const [loading, setLoading] = useState({ loader: false, modal: false });
   const [error, setError] = useState("");
-  const [formValues, setFormValues] = useState<{
-    owner: string;
-    repo: string;
-    pull_number: number;
-  }>({
+  const [formValues, setFormValues] = useState<PullRequest>({
     owner: "bitcoin",
     repo: "bitcoin",
     pull_number: 0,
