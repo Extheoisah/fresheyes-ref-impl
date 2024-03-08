@@ -1,30 +1,22 @@
-use std::fmt;
-use std::sync::Arc;
-use tokio::sync::Mutex;
-use once_cell::sync::Lazy;
 use actix_service::Transform;
-use actix_web::{
-    HttpResponse,
-    dev::{Service,ServiceRequest, ServiceResponse},
-    Error, ResponseError,
-};
-use futures_util::future::{LocalBoxFuture};
+use actix_web::{dev::{Service, ServiceRequest, ServiceResponse}, Error, HttpMessage, HttpResponse, ResponseError, web};
+use futures_util::future::LocalBoxFuture;
+use std::fmt;
 use std::future::{ready, Ready};
+use std::sync::Arc;
 use std::task::{Context, Poll};
 
+
+use crate::app_data::AppData;
 
 
 pub struct Authentication;
 
-// This is the shared state where the token will be stored
-pub static TOKEN: Lazy<Arc<Mutex<Option<String>>>> = Lazy::new(|| Arc::new(Mutex::new(None)));
-
-
 impl<S, B> Transform<S, ServiceRequest> for Authentication
-    where
-        S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
-        S::Future: 'static,
-        B: 'static,
+where
+    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
+    S::Future: 'static,
+    B: 'static,
 {
     type Response = ServiceResponse<B>;
     type Error = Error;
@@ -40,8 +32,6 @@ impl<S, B> Transform<S, ServiceRequest> for Authentication
 pub struct AuthenticationMiddleware<S> {
     service: S,
 }
-
-
 
 struct UnauthorizedError;
 impl ResponseError for UnauthorizedError {
@@ -63,10 +53,10 @@ impl fmt::Display for UnauthorizedError {
 }
 
 impl<S, B> Service<ServiceRequest> for AuthenticationMiddleware<S>
-    where
-        S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
-        S::Future: 'static,
-        B: 'static,
+where
+    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
+    S::Future: 'static,
+    B: 'static,
 {
     type Response = ServiceResponse<B>;
     type Error = Error;
@@ -75,27 +65,32 @@ impl<S, B> Service<ServiceRequest> for AuthenticationMiddleware<S>
     fn poll_ready(&self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         self.service.poll_ready(cx)
     }
-
-
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let headers = req.headers().clone();
         let token = headers
             .get("Authorization")
             .and_then(|header| header.to_str().ok())
-            .unwrap_or_default();
+            .and_then(|header| {
+                let mut parts = header.split(' ');
+                match (parts.next(), parts.next()) {
+                    (Some(scheme), Some(token)) if scheme == "Bearer" => Some(token.to_string()),
+                    _ => None,
+                }
+            });
+        println!("Token found in request headers1: {:?}", token);
 
-        if token.starts_with("Bearer ") {
+        if let Some(token) = token {
+            // Create a new AppData instance with the token
+            let app_data = AppData::new(token);
+            // Store the AppData instance in the request extensions
+            req.extensions_mut().insert(app_data.clone());
             let fut = self.service.call(req);
-
-            // Export the token as an environment variable
-            std::env::set_var("BEARER_TOKEN", &token[7..]);
-
-            Box::pin(async move {
-                fut.await
-            })
+            Box::pin(fut)
         } else {
             println!("No valid token found in request headers");
             Box::pin(async { Err(UnauthorizedError.into()) })
         }
     }
+
+
 }
