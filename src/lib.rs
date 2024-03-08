@@ -282,7 +282,7 @@ impl<'a> ForkRequest<'a> {
                 Ok(fork_result)
             }
             Err(e) => Err(FreshEyesError::ForkError(format!(
-                "error forking the reposotory: {:?}",
+                "error forking the repository: {:?}",
                 e
             ))),
         };
