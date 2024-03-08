@@ -252,20 +252,16 @@ impl<'a> ForkRequest<'a> {
 
     /// create a fork
     pub async fn fork(&self, token: String) -> Result<ForkResult, FreshEyesError> {
-        println!("Token found in request headers5: {:?}", token);
         let fetch_params = format!(
             "https://api.github.com/repos/{}/{}/forks",
             self.owner, self.repo
         );
-      
-        println!("fetch params: {:?}", fetch_params);
+        
      
         let value = json!({
             "default_branch_only": false
         });
         let response = fetch_github_data(&fetch_params, RequestMethod::POST(value), token).await;
-        
-        println!("response: {:?}", response);
         return match response {
             Ok(data) => {
                 let forked_repo = data["html_url"].as_str().unwrap_or_default().to_string();
@@ -278,7 +274,6 @@ impl<'a> ForkRequest<'a> {
                     repo: self.repo.to_string(),
                     forked_repo,
                 };
-                println!("fork result: {:?}", fork_result);
                 Ok(fork_result)
             }
             Err(e) => Err(FreshEyesError::ForkError(format!(
@@ -350,8 +345,6 @@ pub async fn get_pull_request_reviews(
 pub async fn fetch_github_data(url: &str, method: RequestMethod, token: String) -> Result<Value, FreshEyesError> {
     let client = Client::new();
     let mut headers = HeaderMap::new();
-    
-    println!("headers before: {:?}", headers);
 
     headers.insert(header::USER_AGENT, "Fresh Eyes".parse().unwrap());
     headers.insert(AUTHORIZATION, format!("Bearer {}", token).parse().unwrap()); // Corrected line
@@ -364,8 +357,7 @@ pub async fn fetch_github_data(url: &str, method: RequestMethod, token: String) 
         RequestMethod::GET => client.get(url).headers(headers).send().await?,
         RequestMethod::POST(body) => client.post(url).headers(headers).json(&body).send().await?,
     };
-
-    println!("response: {:?}", response);
+    
     // check the status code
     if !response.status().is_success() {
         return Err(FreshEyesError::StatusCodeError(ErrorResponse {

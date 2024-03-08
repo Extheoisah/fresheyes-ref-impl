@@ -1,9 +1,8 @@
 use actix_service::Transform;
-use actix_web::{dev::{Service, ServiceRequest, ServiceResponse}, Error, HttpMessage, HttpResponse, ResponseError, web};
+use actix_web::{dev::{Service, ServiceRequest, ServiceResponse}, Error, HttpMessage, HttpResponse, ResponseError};
 use futures_util::future::LocalBoxFuture;
 use std::fmt;
 use std::future::{ready, Ready};
-use std::sync::Arc;
 use std::task::{Context, Poll};
 
 
@@ -77,7 +76,6 @@ where
                     _ => None,
                 }
             });
-        println!("Token found in request headers1: {:?}", token);
 
         if let Some(token) = token {
             // Create a new AppData instance with the token
@@ -87,7 +85,6 @@ where
             let fut = self.service.call(req);
             Box::pin(fut)
         } else {
-            println!("No valid token found in request headers");
             Box::pin(async { Err(UnauthorizedError.into()) })
         }
     }

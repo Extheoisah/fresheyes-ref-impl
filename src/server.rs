@@ -41,11 +41,8 @@ async fn process_pull_requests(req: HttpRequest, pr: web::Json<PullRequest>) -> 
         .get::<AppData>()
         .expect("AppData not found in request extensions");
     let token = app_data.token.lock().unwrap().clone();
-    println!("Token: {}", token);
 
     let pull_request = pr.into_inner();
-
-    println!("Received pull request: {:?}", pull_request);
 
     // Create a fork of the base repository
     let fork = LibForkRequest::new(&pull_request.owner, &pull_request.repo);
@@ -56,10 +53,6 @@ async fn process_pull_requests(req: HttpRequest, pr: web::Json<PullRequest>) -> 
                 .body(format!("Failed to fork repository: {}", e));
         }
     };
-
-    println!("Fork result: {:?}", fork);
-
-    println!("Fork result: {:?}", fork_result);
 
 
     // Fetch the desired pull request
