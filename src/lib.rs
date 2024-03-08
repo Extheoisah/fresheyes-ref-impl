@@ -347,7 +347,7 @@ pub async fn fetch_github_data(url: &str, method: RequestMethod, token: String) 
     let mut headers = HeaderMap::new();
 
     headers.insert(header::USER_AGENT, "Fresh Eyes".parse().unwrap());
-    headers.insert(AUTHORIZATION, format!("Bearer {}", token).parse().unwrap()); // Corrected line
+    headers.insert(AUTHORIZATION, format!("Bearer {}", token).parse().unwrap()); 
     headers.insert(
         header::ACCEPT,
         "application/vnd.github.v3+json".parse().unwrap(),
