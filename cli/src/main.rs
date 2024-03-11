@@ -1,4 +1,3 @@
-mod app_data;
 mod cli;
 
 use cli::CliArgs;
