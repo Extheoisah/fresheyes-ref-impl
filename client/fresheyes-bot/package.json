@@ -17,6 +17,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "octokit": "^3.1.2",
     "probot": "^12.2.4"
   },
   "devDependencies": {
