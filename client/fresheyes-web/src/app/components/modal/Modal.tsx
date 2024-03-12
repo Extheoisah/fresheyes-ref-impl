@@ -41,6 +41,7 @@ const Modal = ({
                     ...prev,
                     loader: false,
                     modal: false,
+                    isInstalledModal: false
                   }))
                 }
               >

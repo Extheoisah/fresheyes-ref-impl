@@ -36,7 +36,6 @@ export async function checkIfAppInstalledInRepo({ repoName }: { repoName: string
 
           // Check if the specific repo is in the list of accessible repos for the installation
           const repoInstalled = repos.data.repositories.some((repo) => repo.full_name.toLowerCase() === loginRepoName);
-          console.log({ repoInstalled });
 
           return {
             success: true,
@@ -71,7 +70,7 @@ export async function checkIfAppInstalledInRepo({ repoName }: { repoName: string
 
 export const forkRepository = async ({ owner, repo }: { owner: string; repo: string }) => {
   const token = await auth();
-  const octokit = new Octokit({ auth: token });
+  const octokit = new Octokit({ auth: token?.accessToken });
 
   try {
     const forkRepo = await octokit.rest.repos.createFork({ owner, repo });

@@ -6,7 +6,7 @@ import Modal from "../modal/Modal";
 import { processPr } from "./proceess-pr";
 import { PullRequest } from "@/types";
 import { checkIfAppInstalledInRepo, forkRepository } from "./bot";
-import { INSTALLATION_URL } from '@/config/process';
+import { INSTALLATION_URL } from "@/config/process";
 
 const FormSection = () => {
   const [link, setLink] = useState("");
@@ -39,15 +39,12 @@ const FormSection = () => {
     const isBotInstalled = await checkIfAppInstalledInRepo({
       repoName: repo.trim(),
     });
-    console.log(isBotInstalled);
 
     if (!isBotInstalled.installed) {
       const forkRepo = await forkRepository({ owner, repo });
 
       setIsBotInstalled(false);
       setLoading({ loader: false, modal: false, isInstalledModal: true });
-      console.log(isBotInstalled, loading.modal, "modal compare");
-
       return;
     }
 
